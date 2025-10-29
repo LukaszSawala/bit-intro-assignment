@@ -1,4 +1,7 @@
 import argparse
+from lgbm_model import LightGBM
+from catboost_model import CatBoost
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Choose mode")
@@ -17,7 +20,10 @@ def main():
     if args.training:
         if args.model == "lgbm":
             print("Training LGBM model...")
-            train_lgbm()
+            trainer = LightGBM(path="data/processed/processed_v1.csv",
+            test_size=0.1, val_size=0.15)
+            trainer.run_lgbm_pipeline(n_trials=50, top_n_features=15)
+
         elif args.model == "catboost":
             print("Training CatBoost model...")
             train_catboost()
