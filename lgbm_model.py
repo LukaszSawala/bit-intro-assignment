@@ -242,7 +242,6 @@ class LightGBM:
             print(f"Loading pretrained model from {pretrained_model_path}...")
             try:
                 model_to_use = lgb.Booster(model_file=pretrained_model_path)
-                model_features = model_to_use.feature_name()
             except Exception as e:
                 print(f"Error loading pretrained model: {e}")
                 raise
@@ -254,7 +253,6 @@ class LightGBM:
                 "No model available. Either run a training pipeline first "
                 "or provide a 'pretrained_model_path'."
             )
-    
 
         print(f"Loading data from {data_path} for prediction...")
         try:
@@ -268,13 +266,9 @@ class LightGBM:
             for col in processed_df.columns:
                 if processed_df[col].dtype == 'object':
                     processed_df[col] = processed_df[col].astype('category')
-
-            model_features = model_to_use.feature_name_
-            missing_cols = set(model_features) - set(processed_df.columns)
-            if missing_cols:
-                raise ValueError(f"Input data is missing columns: {missing_cols}")
-                
-            processed_df = processed_df[model_features]
+            
+            model_features = model_to_use.feature_name()
+            processed_df = processed_df[model_features] # ensure correct ordering/subset
             log_pred = model_to_use.predict(processed_df)
             final_pred = np.expm1(log_pred)
             

@@ -1,6 +1,6 @@
 import argparse
 from lgbm_model import LightGBM
-#from catboost_model import CatBoost
+from catboost_model import CatBoost
 
 
 def parse_arguments():
@@ -29,7 +29,8 @@ def main():
 
         elif args.model == "catboost":
             print("Training CatBoost model...")
-            #train_catboost()
+            trainer = CatBoost.from_training_data(path="data/processed/processed_v1.csv", test_size=0.1, val_size=0.15)
+            trainer.run_catboost_pipeline(top_n_features=15, model_save_path="final_catboost_model.cbm")
     elif args.inference:
         if args.data_point:
             if args.model == "lgbm":
@@ -41,20 +42,28 @@ def main():
                         pretrained_model_path=args.inference_model_path
                     )
                     print("="*20)
-                    print(f"Predicted Sales Price: ${prediction:,.2f}")
+                    print(f"Predicted Sales Price (LGBM): ${prediction:,.2f}")
 
                 except Exception as e:
                     print(f"\nAn error occurred during prediction: {e}")
 
             elif args.model == "catboost":
                 print("Using CatBoost model for inference...")
-                #inference_catboost(args.data_point)
+                inference_client = CatBoost()
+                try:
+                    prediction = inference_client.predict(
+                        data_path=args.data_point,
+                        pretrained_model_path=args.inference_model_path
+                    )
+                    print("="*20)
+                    print(f"Predicted Sales Price (CatBoost): ${prediction:,.2f}")
+                except Exception as e:
+                    print(f"\nAn error occurred during prediction: {e}")
         else:
             print("Please provide a data point for inference.")
     else:
         print("Please choose either training or inference mode.")
     
-
 
 if __name__ == "__main__":
     main()
