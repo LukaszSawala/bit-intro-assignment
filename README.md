@@ -19,7 +19,7 @@ source .venv/bin/activate
 pip install uv
 
 # Sync all required packages into the virtual environment
-uv syncoost 
+uv sync
 
 # Inference example
 python main.py --inference --model lgbm --inference_model_path final_lgbm_model.txt --data_point data/inference/test_row.csv
