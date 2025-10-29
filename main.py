@@ -18,6 +18,7 @@ def parse_arguments():
     args = parser.parse_args()
     return args
 
+# example usage: python main.py --inference --model catboost --inference_model_path final_catboost_model.cbm --data_point data/inference/test_row.csv
 
 def main():
     args = parse_arguments()

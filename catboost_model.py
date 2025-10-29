@@ -1,12 +1,8 @@
-# catboost_model.py
-
 import pandas as pd
 import numpy as np
 from catboost import CatBoostRegressor, Pool
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-# Assuming DataManager and calculate_scaled_MAE are in utils.py
 from utils import DataManager, calculate_scaled_MAE
 
 
@@ -73,7 +69,7 @@ class CatBoost:
         print("Initializing DataManager for CatBoost...")
         instance.data_manager = DataManager(
             path=path,
-            model_type="catboost",  # Critical: tells DataManager to prep for CatBoost
+            model_type="catboost",
             test_size=test_size,
             val_size=val_size,
             random_state=random_state
@@ -196,7 +192,7 @@ class CatBoost:
             raise ValueError("Model has not been trained yet. Run `train_final_model()` first.")
         
         importances = self.model.get_feature_importance()
-        feature_names = self.model.get_feature_names()
+        feature_names = self.model.feature_names_
         
         importance_df = pd.DataFrame({
             'Feature': feature_names,
@@ -275,12 +271,38 @@ class CatBoost:
             
             processed_df = data_point_df.copy()
             
-            for col in processed_df.columns:
-                if processed_df[col].dtype == 'object':
-                    processed_df[col] = processed_df[col].fillna("Missing").astype(str) 
-        
-            all_features = model_to_use.get_feature_names()
-            predict_pool = Pool(processed_df, cat_features=all_features)
+            # --- START: Corrected Preprocessing ---
+            
+            # 1. Get ALL feature names from the model's attribute
+            all_features = model_to_use.feature_names_
+            
+            # 2. Get the NAMES of the CATEGORICAL features from the model
+            cat_feature_indices = model_to_use.get_cat_feature_indices()
+            cat_feature_names = [all_features[i] for i in cat_feature_indices]
+
+            # 3. Check for any required columns missing from the CSV
+            missing_cols = set(all_features) - set(processed_df.columns)
+            if missing_cols:
+                raise ValueError(f"Input data is missing columns: {missing_cols}")
+
+            # 4. Preprocess *only* the columns the model knows are categorical
+            # This is the main fix: we loop over cat_feature_names,
+            # NOT processed_df.columns
+            for col in cat_feature_names:
+                if col in processed_df.columns:
+                    # Fill NaNs with "Missing" and convert to string
+                    # This matches the DataManager preprocessing
+                    processed_df[col] = processed_df[col].fillna("Missing").astype(str)
+            # --- END: Corrected Preprocessing ---
+
+            # 5. Ensure column order is identical to the model's
+            processed_df = processed_df[all_features]
+            
+            # 6. Create the Pool, passing the *correct* list
+            predict_pool = Pool(
+                processed_df,
+                cat_features=cat_feature_names 
+            )
             
             # Prediction
             log_pred = model_to_use.predict(predict_pool)

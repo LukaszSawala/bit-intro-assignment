@@ -42,7 +42,7 @@ class LightGBM:
         self.model = None
         
         # Base params are still useful for both training and loading
-        self.base_params: Dict[str, Any] = {
+        self.base_params = {
             'objective': 'regression_l1',
             'metric': 'l1',
             'random_state': self.random_state,
@@ -60,12 +60,11 @@ class LightGBM:
         Returns:
             LightGBM: A class instance loaded with data, ready for training.
         """
-        # Create the instance using the standard __init__
         instance = cls(random_state=random_state)
         print("Initializing DataManager for training...")
         instance.data_manager = DataManager(
             path=path,
-            model_type="lgbm",  # Hardcoded for this class
+            model_type="lgbm",
             test_size=test_size,
             val_size=val_size,
             random_state=random_state
@@ -199,6 +198,7 @@ class LightGBM:
         plt.xlabel('Importance')
         plt.ylabel('Feature')
         plt.tight_layout()
+        plt.savefig('feature_importances_lgbm.png')
         plt.show()
         
     def run_lgbm_pipeline(self, n_trials: int = 50, top_n_features: int = 15,
