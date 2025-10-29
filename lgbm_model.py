@@ -5,7 +5,6 @@ import optuna
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import mean_absolute_error
-from typing import Dict, Any, Optional
 from utils import DataManager, calculate_scaled_MAE
 
 # Suppress Optuna's trial logging
@@ -133,13 +132,12 @@ class LightGBM:
             print(f"    {key}: {value}")
 
 
-    def train_final_model(self, save_path: Optional[str] = "final_lgbm_model.txt"):
+    def train_final_model(self, save_path = "final_lgbm_model.txt"):
         """
         Trains the final model on (train + validation) data.
 
         Args:
-            save_path (Optional[str]): Path to save the final model.
-                                       If None, model is not saved.
+            save_path: Path to save the final model. If None, model is not saved.
         """
         if self.data_manager is None:
             raise ValueError("Cannot train. DataManager not initialized. Use `from_training_data()` to initialize.")
@@ -209,7 +207,7 @@ class LightGBM:
         Args:
             n_trials (int): The number of tuning trials to perform.
             top_n_features (int): The number of top features to plot.
-            model_save_path (Optional[str]): Path to save the final model.
+            model_save_path: Path to save the final model.
         """
         if self.data_manager is None:
             raise ValueError("Cannot run pipeline. DataManager not initialized. Use `from_training_data()` to initialize.")
