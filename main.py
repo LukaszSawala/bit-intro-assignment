@@ -18,7 +18,7 @@ def parse_arguments():
     args = parser.parse_args()
     return args
 
-# example usage: python main.py --inference --model catboost --inference_model_path final_catboost_model.cbm --data_point data/inference/test_row.csv
+# example usage (after venv is activated): python main.py --inference --model lgbm --inference_model_path final_lgbm_model.txt --data_point data/inference/test_row.csv
 
 def main():
     args = parse_arguments()
@@ -42,8 +42,9 @@ def main():
                         data_path=args.data_point,
                         pretrained_model_path=args.inference_model_path
                     )
-                    print("="*20)
+                    print("="*40)
                     print(f"Predicted Sales Price (LGBM): ${prediction:,.2f}")
+                    print("="*40)
 
                 except Exception as e:
                     print(f"\nAn error occurred during prediction: {e}")
@@ -56,8 +57,9 @@ def main():
                         data_path=args.data_point,
                         pretrained_model_path=args.inference_model_path
                     )
-                    print("="*20)
+                    print("="*40)
                     print(f"Predicted Sales Price (CatBoost): ${prediction:,.2f}")
+                    print("="*40)
                 except Exception as e:
                     print(f"\nAn error occurred during prediction: {e}")
         else:

@@ -17,14 +17,7 @@ class CatBoost:
 
     def __init__(self, random_state: int = 42):
         """
-        Initializes the CatBoost trainer in a lightweight,
-        inference-ready state.
-        
-        To initialize with data for training, use the
-        `CatBoost.from_training_data()` classmethod.
-
-        Args:
-            random_state (int): The seed for all random operations.
+        Initializes the CatBoost trainer.
         """
         self.data_manager = None
         self.random_state = random_state
@@ -46,14 +39,10 @@ class CatBoost:
         print("CatBoost trainer initialized in base (inference) mode.")
 
     @classmethod
-    def from_training_data(cls,
-                           path: str,
-                           test_size: float = 0.1,
-                           val_size: float = 0.15,
-                           random_state: int = 42):
+    def from_training_data(cls, path: str, test_size: float = 0.1,
+                           val_size: float = 0.15, random_state: int = 42):
         """
-        Class method to create and initialize a CatBoost instance
-        with data for a full training pipeline.
+        Class method to create and initialize a CatBoost instance with data for a full training pipeline.
 
         Args:
             path (str): The file path to the dataset.
@@ -270,41 +259,24 @@ class CatBoost:
                 data_point_df = data_point_df.head(1)
             
             processed_df = data_point_df.copy()
-            
-            # --- START: Corrected Preprocessing ---
-            
-            # 1. Get ALL feature names from the model's attribute
             all_features = model_to_use.feature_names_
             
-            # 2. Get the NAMES of the CATEGORICAL features from the model
+            # Get the categorical variables stored in the model and preprocess those columns in the input
             cat_feature_indices = model_to_use.get_cat_feature_indices()
             cat_feature_names = [all_features[i] for i in cat_feature_indices]
-
-            # 3. Check for any required columns missing from the CSV
-            missing_cols = set(all_features) - set(processed_df.columns)
-            if missing_cols:
-                raise ValueError(f"Input data is missing columns: {missing_cols}")
-
-            # 4. Preprocess *only* the columns the model knows are categorical
-            # This is the main fix: we loop over cat_feature_names,
-            # NOT processed_df.columns
             for col in cat_feature_names:
                 if col in processed_df.columns:
-                    # Fill NaNs with "Missing" and convert to string
-                    # This matches the DataManager preprocessing
                     processed_df[col] = processed_df[col].fillna("Missing").astype(str)
-            # --- END: Corrected Preprocessing ---
 
-            # 5. Ensure column order is identical to the model's
+            # sanity check to filter out wrong columns
             processed_df = processed_df[all_features]
             
-            # 6. Create the Pool, passing the *correct* list
             predict_pool = Pool(
                 processed_df,
                 cat_features=cat_feature_names 
             )
             
-            # Prediction
+            # Predict
             log_pred = model_to_use.predict(predict_pool)
             final_pred = np.expm1(log_pred)
             

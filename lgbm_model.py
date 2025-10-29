@@ -247,7 +247,7 @@ class LightGBM:
                 raise
         elif self.model:
             print("Using model trained in this session...")
-            model_to_use = self.model
+            model_to_use = self.model.booster_
         else:
             raise ValueError(
                 "No model available. Either run a training pipeline first "
@@ -262,13 +262,27 @@ class LightGBM:
                       "Predicting first row only.")
                 data_point_df = data_point_df.head(1)
             
-            processed_df = data_point_df.copy()
-            for col in processed_df.columns:
-                if processed_df[col].dtype == 'object':
-                    processed_df[col] = processed_df[col].astype('category')
             
-            model_features = model_to_use.feature_name()
-            processed_df = processed_df[model_features] # ensure correct ordering/subset
+            processed_df = data_point_df.copy()
+            # --- THIS IS A FIX done using ChatGPT - I could not get it to work myself, such a library-specific bug ---
+            all_feature_names = model_to_use.feature_name()
+            # 2. Get the model's saved parameters
+            model_params = model_to_use.params
+            model_categorical_features = []
+            if 'categorical_feature' in model_params:
+                # 3. Get the *string* of indices, e.g., '0,1,2,5,6'
+                cat_indices_str = model_params['categorical_feature']
+                # 4. Convert string to a list of integer indices
+                cat_indices = [int(i) for i in cat_indices_str]
+                # 5. Look up the feature *names* using the indices
+                model_categorical_features = [all_feature_names[i] for i in cat_indices]
+
+            # Force *only* the columns the model expects to be categorical
+            for col in model_categorical_features:
+                if col in processed_df.columns:
+                    processed_df[col] = processed_df[col].astype('category')
+
+            processed_df = processed_df[all_feature_names]
             log_pred = model_to_use.predict(processed_df)
             final_pred = np.expm1(log_pred)
             
